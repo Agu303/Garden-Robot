@@ -11,10 +11,24 @@ import matplotlib.animation as animation
 dht_device = adafruit_dht.DHT22(board.D18)  # GPIO 18 for DHT-22
 
 # Set up GPS - connected to GPIO 14 (TX) and 15 (RX)
-# On Raspberry Pi, these are UART pins (GPIO 14 = TXD, GPIO 15 = RXD)
-gps_port = "/dev/ttyAMA0"  # Primary UART for GPIO 14 & 15
+# On newer Raspberry Pi models, the primary UART is often at /dev/serial0
+gps_port = "/dev/serial0"  # Try this instead of /dev/ttyAMA0
+# Alternative options if serial0 doesn't work:
+# gps_port = "/dev/ttyS0"
+# gps_port = "/dev/ttyUSB0"  # If using a USB-to-Serial adapter
 gps_baudrate = 9600
-ser = serial.Serial(gps_port, gps_baudrate, timeout=1)
+try:
+    ser = serial.Serial(gps_port, gps_baudrate, timeout=1)
+    print(f"Successfully connected to GPS on {gps_port}")
+except serial.SerialException as e:
+    print(f"Error opening serial port {gps_port}: {e}")
+    print("Available ports may include:")
+    import glob
+    available_ports = glob.glob("/dev/tty*")
+    for port in available_ports:
+        if "ttyS" in port or "ttyAMA" in port or "ttyUSB" in port or "serial" in port:
+            print(f"  - {port}")
+    raise
 
 # Data storage
 timestamps = []
@@ -79,5 +93,3 @@ def update_plot(frame):
 # Start live update
 ani = animation.FuncAnimation(fig, update_plot, interval=1000)
 plt.show()
-
-
