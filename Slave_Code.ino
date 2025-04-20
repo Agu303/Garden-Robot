@@ -89,14 +89,14 @@ void receiveEvent(int howMany) {
 
     // === Actuator Control ===
     if (actSignal < 1010) {
+      Serial.println("Actuator FULL Retract");
+      digitalWrite(ACTUATOR_IN1, LOW);
+      digitalWrite(ACTUATOR_IN2, HIGH);
+      analogWrite(ACTUATOR_PWM, 255);
+    } else if (actSignal > 1980) {
       Serial.println("Actuator FULL EXTEND");
       digitalWrite(ACTUATOR_IN1, HIGH);
       digitalWrite(ACTUATOR_IN2, LOW);
-      analogWrite(ACTUATOR_PWM, 255);
-    } else if (actSignal > 1980) {
-      Serial.println("Actuator FULL RETRACT");
-      digitalWrite(ACTUATOR_IN1, LOW);
-      digitalWrite(ACTUATOR_IN2, HIGH);
       analogWrite(ACTUATOR_PWM, 255);
     } else {
       int delta = 0;
@@ -108,14 +108,14 @@ void receiveEvent(int howMany) {
         delta = actSignal - prevActSignal;
 
         if (delta > deadzone) {
-          Serial.println("Actuator RETRACTING");
-          digitalWrite(ACTUATOR_IN1, LOW);
-          digitalWrite(ACTUATOR_IN2, HIGH);
-          analogWrite(ACTUATOR_PWM, 255);
-        } else if (delta < -deadzone) {
-          Serial.println("Actuator EXTENDING");
+          Serial.println("Actuator Extending");
           digitalWrite(ACTUATOR_IN1, HIGH);
           digitalWrite(ACTUATOR_IN2, LOW);
+          analogWrite(ACTUATOR_PWM, 255);
+        } else if (delta < -deadzone) {
+          Serial.println("Actuator Retracting");
+          digitalWrite(ACTUATOR_IN1, LOW);
+          digitalWrite(ACTUATOR_IN2, HIGH);
           analogWrite(ACTUATOR_PWM, 255);
         } else {
           Serial.println("Actuator STOPPED");
