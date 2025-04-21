@@ -34,7 +34,21 @@ const int motorPin = 4;     // 12V motor control signal
 unsigned long lastUpdate = 0;
 const int updateInterval = 50;
 
+// === Latency Testing Variables ===
+unsigned long lastSignalTime = 0;
+float latencySum = 0;
+unsigned long latencyCount = 0;
+float maxLatency = 0;
+unsigned long startTime = 0;
+const unsigned long loggingDurationMs = 30000; // Log for 30 seconds
+bool latencyDone = false;
+
+
 void setup() {
+    startTime = millis();
+    Serial.println("Time(ms),Latency(ms)");
+
+
     Serial.begin(9600);
     Wire.begin();  // Start I2C as master
 
@@ -55,6 +69,36 @@ void setup() {
 }
 
 void loop() {
+    if (!latencyDone) {
+      pulseIn(steeringPin, HIGH);
+      unsigned long now = micros();
+      float latency = (now - lastSignalTime) / 1000.0;
+      lastSignalTime = now;
+
+    if (latencyCount > 0) {
+      latencySum += latency;
+      if (latency > maxLatency) maxLatency = latency;
+
+      Serial.print(millis());
+      Serial.print(",");
+      Serial.println(latency, 3);
+    }
+
+    latencyCount++;
+
+    if (millis() - startTime >= loggingDurationMs) {
+      latencyDone = true;
+      float averageLatency = latencySum / (latencyCount - 1);
+      Serial.println();
+      Serial.println("=== Summary ===");
+      Serial.print("Average Latency (ms): ");
+      Serial.println(averageLatency, 3);
+      Serial.print("Max Latency (ms): ");
+      Serial.println(maxLatency, 3);
+      Serial.println("================");
+    }
+  }
+
     if (millis() - lastUpdate >= updateInterval) {
         lastUpdate = millis();
 
